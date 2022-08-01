@@ -1,0 +1,19 @@
+{
+  "name": "Mapty",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./CSS/main.css",
+    "watch": "tailwindcss -i ./src/input.css -o ./CSS/main.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.1.7"
+  },
+  "dependencies": {
+    "uuid": "^8.3.2"
+  }
+}
