@@ -15,6 +15,8 @@ const myIcon = L.icon({
 //? Form Stuff
     const workoutContainer = document.querySelector(".workouts");
     const reloadBtn = document.querySelector(".reload");
+    const errorPopup = document.querySelector(".error");
+        
         
     const form           =   document.querySelector(".form");
     const inputType      =   form.querySelector(".form__input--type");
@@ -22,6 +24,7 @@ const myIcon = L.icon({
     const inputDuration  =   form.querySelector(".form__input--duration");
     const inputCadence   =   form.querySelector(".form__input--cadence");
     const inputElevation =   form.querySelector(".form__input--elevation");
+
 
 
 //! App Class
@@ -32,6 +35,8 @@ class App{
 
      #workouts = [];
      #workout;
+     #deletedElem;
+     #deletedID;
 
      
 
@@ -47,8 +52,11 @@ class App{
         inputType.addEventListener('change', this._toggleElevationInput.bind(this));
         //! Move When Clicking On List Element
         workoutContainer.addEventListener("click", this._movePopup.bind(this));
+        //! Delete From List
+        workoutContainer.addEventListener("click", this._deleteWorkoutList.bind(this));
         //! Reload Button
         reloadBtn.addEventListener("click",this._reset);
+
 
 
       
@@ -93,7 +101,7 @@ class App{
         });
     }
     _errorLoading(){
-        alert("Could'nt Load The Map !");
+        alert("Couldn't Load The Map.");
     }
     _showForm(mpevent){
             this.#mapEvent = mpevent;
@@ -136,7 +144,10 @@ class App{
         if(type === 'running'){
             const cadence = 1 * inputCadence.value;
             //? Check if data is valid
-            if(!validInputs(distance,duration,cadence) || !positives(distance,duration,cadence)) return alert("Invalid Inputs..");
+            if(!validInputs(distance,duration,cadence) || !positives(distance,duration,cadence)){
+              this._createErrorPopup("Invalid Inputs","Valid Input are Whole Positive Numbers.");
+              return;
+            } 
             //? Add new object to workout array
              this.#workout = new Running(distance,duration,coordinate,cadence);
         }
@@ -145,13 +156,15 @@ class App{
         if(type === 'cycling'){
             const elevation = 1 * inputElevation.value;
             //? Check if data is valid
-            if(!validInputs(distance,duration,elevation) || !positives(distance,duration)) return alert("Invalid Inputs..");
+            if(!validInputs(distance,duration,elevation) || !positives(distance,duration)) {
+                this._createErrorPopup("Invalid Inputs", "Valid Input are Whole Positive Numbers.");
+               return;
+            }
             //? Add new object to workout array
              this.#workout = new Cycling(distance,duration,coordinate,elevation);
         }
 
         //? Add new Workout to Workouts
-        console.log(this.#workouts)
         this.#workouts.push(this.#workout);
         
         //? Render workout on map as marker
@@ -184,12 +197,16 @@ class App{
         }))
          .setPopupContent(`${workout.type === 'running' ? '🏃‍♂️ ' : '🚴‍♀️ '}${workout.description}`)
          .openPopup()
-        
     }
 
     _renderWorkoutList(workout){
          let element = `
          <li class="workout workout--${workout.type}" data-id="${workout.id}">
+          <button class="delete">
+            <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                <path d="M135.2 17.69C140.6 6.848 151.7 0 163.8 0H284.2C296.3 0 307.4 6.848 312.8 17.69L320 32H416C433.7 32 448 46.33 448 64C448 81.67 433.7 96 416 96H32C14.33 96 0 81.67 0 64C0 46.33 14.33 32 32 32H128L135.2 17.69zM394.8 466.1C393.2 492.3 372.3 512 346.9 512H101.1C75.75 512 54.77 492.3 53.19 466.1L31.1 128H416L394.8 466.1z"/>
+            </svg>
+          </button>
           <h2 class="workout__title">${workout.description}</h2>
           
           <div class="workout__details">
@@ -220,6 +237,76 @@ class App{
 
          form.insertAdjacentHTML('afterend', element);
     }
+    _renderErrorPopup(title,desc) {
+        let errorPopup = `
+        <div class="error show">
+         <ul class="flex space-x-3 w-full items-center justify-start">
+            <li>
+            <svg class="w-7 h-auto fill-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <path d="M459.1 52.39L504.8 69.22C509 70.78 512 75.12 512 79.67C512 84.15 508.1
+            88.38 504.8 89.83L459.1 106.7L442.6 152.5C441.1 156.9 436.7 160 432.1 160C427.5
+            160 423.2 156.9 421.7 152.5L404.9 106.7L359.2 89.83C355 88.38 352 84.15 352 
+            79.67C351.1 75.12 354.1 70.78 359.2 69.22L405.2 52.39L421.7 6.548C423.6 2.623
+            427.8 0 432.1 0C436.5 0 440.7 2.623 442.6 6.548L459.1 52.39zM406.6 185.4C419.1
+            197.9 419.1 218.1 406.6 230.6L403.8 233.5C411.7 255.5 416 279.3 416 303.1C416 
+            418.9 322.9 512 208 512C93.12 512 0 418.9 0 303.1C0 189.1 93.12 95.1 208 
+            95.1C232.7 95.1 256.5 100.3 278.5 108.2L281.4 105.4C293.9 92.88 314.1 92.88
+            326.6 105.4L406.6 185.4zM207.1 192C216.8 192 223.1 184.8 223.1 176C223.1 
+            167.2 216.8 160 207.1 160H199.1C124.9 160 63.1 220.9 63.1 296V304C63.1 312.8 
+            71.16 320 79.1 320C88.84 320 95.1 312.8 95.1 304V296C95.1 238.6 142.6 192 199.1 
+            192H207.1z"/></svg>
+            </li>
+            <li class="basis-9/12 flex flex-col">
+            <span class="font-black text-sm text-red-500">${title}</span>
+            <span class="font-light text-xs text-slate-300">${desc}</span>
+            </li>
+            <li id="close-error" class="basis-3/12 text-right pr-2 text-md cursor-pointer transition-colors text-slate-200 hover:text-slate-400">
+                close
+            </li>
+         </ul>
+        </div>
+        `;
+        document.querySelector(".body").insertAdjacentHTML("afterbegin",errorPopup);
+    }
+    _createErrorPopup(title,desc){
+        this._renderErrorPopup(title,desc);
+        const closeBtn = document.getElementById("close-error");
+        closeBtn.onclick = () => {
+            const popupError = document.querySelector(".error");
+            popupError.classList.remove("show");
+        }
+    }
+    _deleteWorkoutList(e){
+        const workoutEl = e.target.closest(".workout");
+        if(!workoutEl) return;
+        if(this.#deletedElem){
+            const oldDeletebtn = this.#deletedElem.querySelector(".delete");
+            oldDeletebtn.classList.remove("show");
+        }
+
+        this.#deletedElem = workoutEl;
+        const newDeletebtn = workoutEl.querySelector(".delete");
+        newDeletebtn.classList.toggle("show");
+
+        //! Event Listener On Click On Delete Button
+        newDeletebtn.onclick = () => {
+            
+            this.#deletedID = this.#deletedElem.getAttribute("data-id");
+
+            //! Delete Element From workouts List 
+            this.#deletedElem.remove();
+            //! Delete Element Markup From workouts Map
+            let workouts = this.#workouts.filter((workout)=>{ return workout.id !== this.#deletedID})
+            this.#workouts = workouts;
+
+            //! Delete Element From LocalStorage
+            this._setLocalStorage();
+
+            //! Reload Page
+            location.reload()
+        }
+        
+    }
     _movePopup(e) {
         const workoutEl = e.target.closest(".workout");
         if(!workoutEl) return;
@@ -228,7 +315,6 @@ class App{
         const workout = this.#workouts.find(worKout => worKout.id === workoutEl.dataset.id);
         if(workout)
         {
-          
             this.#map.setView(workout.coords, this.#mapZoom, {
                 animate : true,
                 pan : {
